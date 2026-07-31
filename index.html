@@ -426,16 +426,6 @@
 
       <button class="btn btn-primary" style="margin-top:16px;" onclick="submitRSVP()">Confirmar presença</button>
     </div>
-
-    <div class="card">
-      <div class="tag" style="margin-bottom:6px;">GUILDA CONFIRMADA</div>
-      <div class="counts" id="counts">
-        <div class="count-pill"><b id="cGuests">0</b><span>pessoas</span></div>
-        <div class="count-pill"><b id="cKids">0</b><span>crianças</span></div>
-        <div class="count-pill"><b id="cGroups">0</b><span>confirmações</span></div>
-      </div>
-      <div class="guest-list" id="guestList">Carregando lista...</div>
-    </div>
   </section>
 
   <section>
@@ -476,7 +466,7 @@
    Enquanto estiver vazio, o convite salva os dados só localmente
    (modo demo, funciona aqui no preview do Claude).
    ========================================================= */
-const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzJgDEOrpypkFnsZ6WdiZkhLEJQ85H0u0RCHJC2bUIDgXGZjch11s9FJfS-hR_OZjLVBA/exec'; // <- cole aqui algo tipo: https://script.google.com/macros/s/XXXXX/exec
+const SHEETS_URL = ''; // <- cole aqui algo tipo: https://script.google.com/macros/s/XXXXX/exec
 
 async function saveEntry(payload, type) {
   if (SHEETS_URL) {
@@ -569,38 +559,9 @@ async function submitRSVP() {
     document.getElementById('btnYes').classList.remove('active-yes');
     document.getElementById('btnNo').classList.remove('active-no');
     document.getElementById('attendingExtras').style.display = 'none';
-    loadGuests();
   } else {
     showToast('Ops, deu ruim pra salvar. Tenta de novo!');
   }
-}
-
-async function loadGuests() {
-  const listEl = document.getElementById('guestList');
-  const entries = await fetchEntries('rsvp');
-  const going = entries.filter(e => e.attending === true || e.attending === 'TRUE' || e.attending === 'true');
-  let totalPeople = 0, totalKids = 0;
-  going.forEach(e => {
-    const comps = Array.isArray(e.companions) ? e.companions : (e.companions ? String(e.companions).split(',').map(s => s.trim()).filter(Boolean) : []);
-    totalPeople += 1 + comps.length;
-    totalKids += parseInt(e.kids || 0, 10) || 0;
-  });
-
-  document.getElementById('cGuests').textContent = totalPeople;
-  document.getElementById('cKids').textContent = totalKids;
-  document.getElementById('cGroups').textContent = going.length;
-
-  if (going.length === 0) {
-    listEl.innerHTML = 'Ninguém confirmou ainda. Seja o primeiro herói! 🦸';
-    return;
-  }
-  listEl.innerHTML = going.map(e => {
-    const comps = Array.isArray(e.companions) ? e.companions : (e.companions ? String(e.companions).split(',').map(s => s.trim()).filter(Boolean) : []);
-    const extra = [];
-    if (comps.length) extra.push('+ ' + comps.join(', '));
-    if (e.kids) extra.push(e.kids + ' criança(s)');
-    return `<div class="guest-item"><span><b>${escapeHtml(e.name)}</b>${extra.length ? ' — ' + escapeHtml(extra.join(' · ')) : ''}</span></div>`;
-  }).join('');
 }
 
 function escapeHtml(str) {
@@ -609,23 +570,22 @@ function escapeHtml(str) {
   return d.innerHTML;
 }
 
-loadGuests();
-
 /* ---------------- QUIZ ---------------- */
 const questions = [
-  { q: "Qual o prato favorito do aniversariante?", opts: ["Feijoada", "Salpicão", "Sushi", "Pizza de calabresa"], correct: "Salpicão" },
-  { q: "Qual filme/série ele mais ama?", opts: ["Attack on Titan", "Round 6", "Como Treinar o Seu Dragão", "Star Wars"], correct: "Como Treinar o Seu Dragão" },
-  { q: "Qual seu personagem favorito?", opts: ["Goku (Dragon Ball)", "Naruto Uzumaki", "Luffy (One Piece)", "Homem-Aranha"], correct: "Luffy (One Piece)" },
-  { q: "Qual cerveja ele mais gosta?", opts: ["Brahma", "Heineken", "Skol", "Original"], correct: "Original" },
-  { q: "Qual o maior hobby dele além de curtir festa?", opts: ["Jogar futebol", "Ver anime", "Malhar", "Cozinhar"], correct: "Ver anime" },
-  { q: "Do que ele tem medo bobo?", opts: ["Barata", "Palhaço", "Aranha", "Altura"], correct: "Aranha" },
-  { q: "Qual jogo ele mais joga?", opts: ["FIFA", "Minecraft", "Among Us", "Overcooked"], correct: "Overcooked" },
-  { q: "Qual desses já foi apelido do aniversariante na faculdade?", opts: ["Cabeção", "Oliveira", "Rosa", "Capitão Trovão"], correct: "Rosa" },
-  { q: "Qual seria o superpoder ideal dele?", opts: ["Voar", "Invisibilidade", "Super força", "Superinteligência (saber de tudo)"], correct: "Superinteligência (saber de tudo)" }
+  { key: 'prato', q: "Qual o prato favorito do aniversariante?", opts: ["Feijoada", "Salpicão", "Sushi", "Pizza de calabresa"], correct: "Salpicão" },
+  { key: 'filme', q: "Qual filme/série ele mais ama?", opts: ["Attack on Titan", "Round 6", "Como Treinar o Seu Dragão", "Star Wars"], correct: "Como Treinar o Seu Dragão" },
+  { key: 'personagem', q: "Qual seu personagem favorito?", opts: ["Goku (Dragon Ball)", "Naruto Uzumaki", "Luffy (One Piece)", "Homem-Aranha"], correct: "Luffy (One Piece)" },
+  { key: 'cerveja', q: "Qual cerveja ele mais gosta?", opts: ["Brahma", "Heineken", "Skol", "Original"], correct: "Original" },
+  { key: 'hobby', q: "Qual o maior hobby dele além de curtir festa?", opts: ["Jogar futebol", "Ver anime", "Malhar", "Cozinhar"], correct: "Ver anime" },
+  { key: 'medo', q: "Do que ele tem medo bobo?", opts: ["Barata", "Palhaço", "Aranha", "Altura"], correct: "Aranha" },
+  { key: 'jogo', q: "Qual jogo ele mais joga?", opts: ["FIFA", "Minecraft", "Among Us", "Overcooked"], correct: "Overcooked" },
+  { key: 'apelido', q: "Qual desses já foi apelido do aniversariante na faculdade?", opts: ["Cabeção", "Oliveira", "Tony", "Capitão Trovão"], correct: "Tony" },
+  { key: 'superpoder', q: "Qual seria o superpoder ideal dele?", opts: ["Voar", "Invisibilidade", "Super força", "Superinteligência (saber de tudo)"], correct: "Superinteligência (saber de tudo)" }
 ];
 
 let current = 0;
 let score = 0;
+let userAnswers = {};
 
 function shuffle(arr) {
   const a = arr.slice();
@@ -644,20 +604,22 @@ function renderQuiz() {
     card.innerHTML = `
       <div class="quiz-progress">Pergunta ${current + 1} de 10</div>
       <div class="quiz-q">${item.q}</div>
-      ${opts.map(o => `<button class="quiz-opt" onclick="answer(this, '${o.replace(/'/g, "\\'")}', '${item.correct.replace(/'/g, "\\'")}')">${o}</button>`).join('')}
+      ${opts.map(o => `<button class="quiz-opt" onclick="answer(this, '${o.replace(/'/g, "\\'")}', '${item.correct.replace(/'/g, "\\'")}', '${item.key}')">${o}</button>`).join('')}
     `;
   } else {
     renderImpossible();
   }
 }
 
-function answer(btn, chosen, correct) {
+function answer(btn, chosen, correct, key) {
   const buttons = document.querySelectorAll('#quizCard .quiz-opt');
   buttons.forEach(b => {
     b.disabled = true;
     if (b.textContent === correct) b.classList.add('correct');
   });
-  if (chosen === correct) { score++; }
+  const isCorrect = chosen === correct;
+  userAnswers[key] = isCorrect;
+  if (isCorrect) { score++; }
   else { btn.classList.add('wrong'); }
 
   setTimeout(() => { current++; renderQuiz(); }, 900);
@@ -752,7 +714,7 @@ async function saveScore(autoName) {
   const name = autoName || document.getElementById('scoreName').value.trim() || 'Anônimo';
   const btn = document.getElementById('saveScoreBtn');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
-  const ok = await saveEntry({ name, quizScore: score, ts: Date.now() }, 'quiz');
+  const ok = await saveEntry({ name, quizScore: score, answers: userAnswers, ts: Date.now() }, 'quiz');
   const msgEl = document.getElementById('scoreSaveMsg');
   msgEl.textContent = ok ? 'Pontuação salva! ✅' : 'Não consegui salvar agora 😕';
   msgEl.style.color = ok ? 'var(--green)' : 'var(--red)';
