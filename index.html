@@ -618,7 +618,7 @@ function answer(btn, chosen, correct, key) {
     if (b.textContent === correct) b.classList.add('correct');
   });
   const isCorrect = chosen === correct;
-  userAnswers[key] = isCorrect;
+  userAnswers[key] = { answer: chosen, correct: isCorrect };
   if (isCorrect) { score++; }
   else { btn.classList.add('wrong'); }
 
